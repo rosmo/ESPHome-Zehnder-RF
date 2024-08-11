@@ -66,10 +66,12 @@ time:
     id: homeassistant_time
     timezone: Europe/Amsterdam
 
-button:
+switch:
   - platform: restart
     id: ${devicename}_esphome_restart
     name: ${upper_devicename} restart
+
+button:
 
   - platform: template
     id: ${devicename}_high_10
@@ -86,6 +88,10 @@ button:
       then:
         lambda: |-
           zehnder_fan->setSpeed(3, 30);
+
+  - platform: factory_reset
+    id: ${devicename}_esphome_reset
+    name: Restart with factory default settings
 
 # Load external components
 # https://esphome.io/components/external_components.html#external-components-git
