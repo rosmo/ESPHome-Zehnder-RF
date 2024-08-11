@@ -149,10 +149,77 @@ void ZehnderRF::setup() {
   });
 }
 
+void ZehnderRF::dump_frame(const uint8_t *const pData) {
+  const RfFrame *const frame = (RfFrame *) pData;
+
+  ESP_LOGI(TAG, "rx_type = 0x%02X", frame->rx_type);
+  ESP_LOGI(TAG, "rx_id   = 0x%02X", frame->rx_id);
+  ESP_LOGI(TAG, "tx_type = 0x%02X", frame->tx_type);
+  ESP_LOGI(TAG, "tx_id   = 0x%02X", frame->tx_id);
+  ESP_LOGI(TAG, "ttl     = %d", frame->ttl);
+  ESP_LOGI(TAG, "command = 0x%02X", frame->command);
+  switch (frame->command) {
+    case FAN_FRAME_SETSPEED: // Set speed (preset)
+      ESP_LOGI(TAG, "set speed = %d", frame->payload.setSpeed.speed);
+      break;
+    case FAN_FRAME_SETTIMER: // Set speed with timer
+      ESP_LOGI(TAG, "set timer = speed %d, timer %d", frame->payload.setTimer.speed, frame->payload.setTimer.timer);
+      break;
+    case FAN_NETWORK_JOIN_REQUEST: 
+      ESP_LOGI(TAG, "join network = %08lX", frame->payload.networkJoinRequest.networkId);
+      break;
+    case FAN_NETWORK_JOIN_OPEN:
+      ESP_LOGI(TAG, "join open = %08lX", frame->payload.networkJoinOpen.networkId);
+      break;
+    case FAN_TYPE_FAN_SETTINGS:
+      ESP_LOGI(TAG, "fan settings = speed %d, voltage %d, timer %d", frame->payload.fanSettings.speed, frame->payload.fanSettings.voltage, frame->payload.fanSettings.timer);
+      break;
+    case FAN_NETWORK_JOIN_ACK:
+      ESP_LOGI(TAG, "join ack = %08lX", frame->payload.networkJoinAck.networkId);
+      break;
+    case FAN_FRAME_SETSPEED_REPLY:
+      ESP_LOGI(TAG, "set speed reply");
+      for (int i = 0; i < frame->parameter_count; i++) {
+        ESP_LOGI(TAG, "parameter %d: %d", i, frame->payload.parameters[i]);
+      }
+      break;
+    case FAN_FRAME_0B:
+      ESP_LOGI(TAG, "frame 0b");
+      for (int i = 0; i < frame->parameter_count; i++) {
+        ESP_LOGI(TAG, "parameter %d: %d", i, frame->payload.parameters[i]);
+      }
+      break;
+    case FAN_TYPE_QUERY_NETWORK:
+      ESP_LOGI(TAG, "query network");
+      for (int i = 0; i < frame->parameter_count; i++) {
+        ESP_LOGI(TAG, "parameter %d: %d", i, frame->payload.parameters[i]);
+      }
+      break;
+    case FAN_TYPE_QUERY_DEVICE:
+      ESP_LOGI(TAG, "query device");
+      for (int i = 0; i < frame->parameter_count; i++) {
+        ESP_LOGI(TAG, "parameter %d: %d", i, frame->payload.parameters[i]);
+      }
+      break;
+    case FAN_FRAME_SETVOLTAGE_REPLY:
+      ESP_LOGI(TAG, "set voltage reply");
+      for (int i = 0; i < frame->parameter_count; i++) {
+        ESP_LOGI(TAG, "parameter %d: %d", i, frame->payload.parameters[i]);
+      }
+      break;
+    default:
+      ESP_LOGI(TAG, "unknown frame");
+      for (int i = 0; i < frame->parameter_count; i++) {
+        ESP_LOGI(TAG, "parameter %d: %d", i, frame->payload.parameters[i]);
+      }
+      break;
+  }
+}
+
 void ZehnderRF::dump_config(void) {
   ESP_LOGCONFIG(TAG, "Zehnder Fan config:");
-  ESP_LOGCONFIG(TAG, "  Polling interval   %u", this->interval_);
-  ESP_LOGCONFIG(TAG, "  Fan networkId      0x%08X", this->config_.fan_networkId);
+  ESP_LOGCONFIG(TAG, "  Polling interval   %lu", this->interval_);
+  ESP_LOGCONFIG(TAG, "  Fan networkId      0x%08lX", this->config_.fan_networkId);
   ESP_LOGCONFIG(TAG, "  Fan my device type 0x%02X", this->config_.fan_my_device_type);
   ESP_LOGCONFIG(TAG, "  Fan my device id   0x%02X", this->config_.fan_my_device_id);
   ESP_LOGCONFIG(TAG, "  Fan main_unit type 0x%02X", this->config_.fan_main_unit_type);
@@ -225,12 +292,14 @@ void ZehnderRF::rfHandleReceived(const uint8_t *const pData, const uint8_t dataL
   nrf905::Config rfConfig;
 
   ESP_LOGD(TAG, "Current state: 0x%02X", this->state_);
+  dump_frame(pData);
+
   switch (this->state_) {
     case StateDiscoveryWaitForLinkRequest:
       ESP_LOGD(TAG, "DiscoverStateWaitForLinkRequest");
       switch (pResponse->command) {
         case FAN_NETWORK_JOIN_OPEN:  // Received linking request from main unit
-          ESP_LOGD(TAG, "Discovery: Found unit type 0x%02X (%s) with ID 0x%02X on network 0x%08X", pResponse->tx_type,
+          ESP_LOGD(TAG, "Discovery: Found unit type 0x%02X (%s) with ID 0x%02X on network 0x%08lX", pResponse->tx_type,
                    pResponse->tx_type == FAN_TYPE_MAIN_UNIT ? "Main" : "?", pResponse->tx_id,
                    pResponse->payload.networkJoinOpen.networkId);
 
@@ -284,7 +353,7 @@ void ZehnderRF::rfHandleReceived(const uint8_t *const pData, const uint8_t dataL
               (pResponse->rx_id == this->config_.fan_my_device_id) &&
               (pResponse->tx_type == this->config_.fan_main_unit_type) &&
               (pResponse->tx_id == this->config_.fan_main_unit_id)) {
-            ESP_LOGD(TAG, "Discovery: Link successful to unit with ID 0x%02X on network 0x%08X", pResponse->tx_id,
+            ESP_LOGD(TAG, "Discovery: Link successful to unit with ID 0x%02X on network 0x%08lX", pResponse->tx_id,
                      this->config_.fan_networkId);
 
             this->rfComplete();
@@ -307,7 +376,7 @@ void ZehnderRF::rfHandleReceived(const uint8_t *const pData, const uint8_t dataL
 
             this->state_ = StateDiscoveryJoinComplete;
           } else {
-            ESP_LOGE(TAG, "Discovery: Received unknown link success from ID 0x%02X on network 0x%08X", pResponse->tx_id,
+            ESP_LOGE(TAG, "Discovery: Received unknown link success from ID 0x%02X on network 0x%08lX", pResponse->tx_id,
                      this->config_.fan_networkId);
           }
           break;
@@ -342,7 +411,7 @@ void ZehnderRF::rfHandleReceived(const uint8_t *const pData, const uint8_t dataL
           break;
 
         default:
-          ESP_LOGE(TAG, "Discovery: Received unknown frame type 0x%02X from ID 0x%02X on network 0x%08X",
+          ESP_LOGE(TAG, "Discovery: Received unknown frame type 0x%02X from ID 0x%02X on network 0x%08lX",
                    pResponse->command, pResponse->tx_id, this->config_.fan_networkId);
           break;
       }
@@ -427,7 +496,7 @@ void ZehnderRF::rfHandleReceived(const uint8_t *const pData, const uint8_t dataL
       break;
 
     default:
-      ESP_LOGD(TAG, "Received frame from unknown device in unknown state; type 0x%02X from ID 0x%02X type 0x%02X",
+      ESP_LOGD(TAG, "Received frame from unknown device in unknown state; command type 0x%02X from ID 0x%02X (tx type 0x%02X)",
                pResponse->command, pResponse->tx_id, pResponse->tx_type);
       break;
   }

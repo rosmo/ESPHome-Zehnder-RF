@@ -92,6 +92,8 @@ class ZehnderRF : public Component, public fan::Fan {
   void rfHandler(void);
   void rfHandleReceived(const uint8_t *const pData, const uint8_t dataLength);
 
+  void dump_frame(const uint8_t *const pData);
+
   typedef enum {
     StateStartup,
     StateStartDiscovery,
