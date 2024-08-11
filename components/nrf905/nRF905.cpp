@@ -557,6 +557,7 @@ void nRF905::startTx(const uint32_t retransmit, const Mode nextMode) {
   }
 
   // Start transmit
+  delay(1); // Delay needed to allow radio to process config
   this->setMode(Transmit);
 }
 
