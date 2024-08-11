@@ -7,7 +7,7 @@ out of box since it uses latest Git.
 2) Set your GPIO pins there as well
 3) Create secrets.yaml with:
 ```
-esphome_utility_bridge_api_password: <password>
+esphome_utility_bridge_api_key: <base64 string> # go here to generate: https://esphome.io/components/api.html?highlight=randomly%20generated
 esphome_utility_bridge_ota_password: <password>
 esphome_utility_bridge_ap_password: <password>
 wifi_ssid: <wifi name>
@@ -17,3 +17,4 @@ wifi_ip_utility_bridge: 192.168.1.238
 wifi_gateway: 192.168.1.1
 wifi_subnet: 255.255.248.0
 ```
+

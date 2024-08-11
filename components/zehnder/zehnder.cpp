@@ -152,13 +152,56 @@ void ZehnderRF::setup() {
 void ZehnderRF::dump_frame(const uint8_t *const pData) {
   const RfFrame *const frame = (RfFrame *) pData;
 
-  ESP_LOGI(TAG, "rx_type = 0x%02X", frame->rx_type);
+  char *rx_type = "unknown";
+  char *tx_type = "unknown";
+  switch (frame->rx_type) {
+    case FAN_TYPE_BROADCAST:
+      rx_type = "broadcast";
+      break;
+    case FAN_TYPE_MAIN_UNIT:
+      rx_type = "main unit";
+      break;
+    case FAN_TYPE_REMOTE_CONTROL:
+      rx_type = "remote control";
+      break;
+    case FAN_TYPE_CO2_SENSOR:
+      rx_type = "co2 sensor";
+      break;
+    case FAN_TYPE_HYGROMETER:
+      rx_type = "co2 sensor";
+      break;
+    default:
+      break;
+  }
+  switch (frame->tx_type) {
+    case FAN_TYPE_BROADCAST:
+      tx_type = "broadcast";
+      break;
+    case FAN_TYPE_MAIN_UNIT:
+      tx_type = "main unit";
+      break;
+    case FAN_TYPE_REMOTE_CONTROL:
+      tx_type = "remote control";
+      break;
+    case FAN_TYPE_CO2_SENSOR:
+      tx_type = "co2 sensor";
+      break;
+    case FAN_TYPE_HYGROMETER:
+      tx_type = "co2 sensor";
+      break;
+    default:
+      break;
+  }
+  ESP_LOGI(TAG, "rx_type = 0x%02X (%s)", frame->rx_type, rx_type);
   ESP_LOGI(TAG, "rx_id   = 0x%02X", frame->rx_id);
-  ESP_LOGI(TAG, "tx_type = 0x%02X", frame->tx_type);
+  ESP_LOGI(TAG, "tx_type = 0x%02X (%s)", frame->tx_type, tx_type);
   ESP_LOGI(TAG, "tx_id   = 0x%02X", frame->tx_id);
   ESP_LOGI(TAG, "ttl     = %d", frame->ttl);
   ESP_LOGI(TAG, "command = 0x%02X", frame->command);
   switch (frame->command) {
+    case FAN_FRAME_SETVOLTAGE:
+      ESP_LOGI(TAG, "set voltage = %d", frame->payload.parameters[0]);
+      break;
     case FAN_FRAME_SETSPEED: // Set speed (preset)
       ESP_LOGI(TAG, "set speed = %d", frame->payload.setSpeed.speed);
       break;
