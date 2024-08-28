@@ -37,22 +37,22 @@ preferences:
 
 # SPI
 spi:
-  clk_pin: GPIO13   # SCK
-  mosi_pin: GPIO12  # MOSI
-  miso_pin: GPIO11  # MISO
+  clk_pin: GPIO6    # SCK to FSPICLK
+  mosi_pin: GPIO7   # MOSI to FSPID
+  miso_pin: GPIO10  # MISO to GPIO10
 
 # nRF905 config
 nrf905:
   id: "nrf905_rf"
-  cs_pin: GPIO23    # CSN, NSS
-  cd_pin: GPIO22    # CD
+  cs_pin: GPIO5    # CSN, NSS to FSPIWP 
+  cd_pin: GPIO22    # CD 
   ce_pin: GPIO21
   pwr_pin: GPIO20
   txen_pin: GPIO19  # TXEN
 
 # Enable logging
 logger:
-  level: INFO
+  level: DEBUG
 
 # Enable Home Assistant API
 api:

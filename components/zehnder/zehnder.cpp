@@ -298,7 +298,7 @@ void ZehnderRF::loop(void) {
         if ((this->config_.fan_networkId == 0x00000000) || (this->config_.fan_my_device_type == 0) ||
             (this->config_.fan_my_device_id == 0) || (this->config_.fan_main_unit_type == 0) ||
             (this->config_.fan_main_unit_id == 0)) {
-          ESP_LOGD(TAG, "Invalid config, start paring");
+          ESP_LOGD(TAG, "Invalid config, start pairing");
 
           this->state_ = StateStartDiscovery;
         } else {
@@ -418,7 +418,7 @@ void ZehnderRF::rfHandleReceived(const uint8_t *const pData, const uint8_t dataL
             (void) memset(this->_txFrame, 0, FAN_FRAMESIZE);  // Clear frame data
 
             pTxFrame->rx_type = FAN_TYPE_MAIN_UNIT;  // Set type to main unit
-            pTxFrame->rx_id = 0x00;  // Broadcast
+            pTxFrame->rx_id = pResponse->tx_id;  // Set ID to the ID of the main unit
             pTxFrame->tx_type = this->config_.fan_my_device_type;
             pTxFrame->tx_id = this->config_.fan_my_device_id;
             pTxFrame->ttl = FAN_TTL;
@@ -625,7 +625,7 @@ void ZehnderRF::setSpeed(const uint8_t paramSpeed, const uint8_t paramTimer) {
 
     // Build frame
     pFrame->rx_type = this->config_.fan_main_unit_type;
-    pFrame->rx_id = 0x00;  // Broadcast
+    pFrame->rx_id = this->config_.fan_main_unit_id;  // Was broadcast previously
     pFrame->tx_type = this->config_.fan_my_device_type;
     pFrame->tx_id = this->config_.fan_my_device_id;
     pFrame->ttl = FAN_TTL;

@@ -537,7 +537,7 @@ void nRF905::startTx(const uint32_t retransmit, const Mode nextMode) {
   bool update = false;
   if (this->_mode == PowerDown) {
     this->setMode(Idle);
-    delay(3);  // Delay is needed to the radio has time to power-up and see the standby/TX pins pulse
+    delay(6);  // Delay is needed to the radio has time to power-up and see the standby/TX pins pulse
   }
 
   // Update counters
@@ -557,7 +557,7 @@ void nRF905::startTx(const uint32_t retransmit, const Mode nextMode) {
   }
 
   // Start transmit
-  delay(1); // Delay needed to allow radio to process config
+  delay(2); // Delay needed to allow radio to process config
   this->setMode(Transmit);
 }
 
